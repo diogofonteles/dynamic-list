@@ -1,5 +1,4 @@
 import {Observable} from "rxjs";
-import {PaginatedResponse} from "../data.service";
 
 export interface GroupedItems {
     name: string;
@@ -44,4 +43,24 @@ export interface ScrollEvent {
     clientHeight: number;
     reachEnd: boolean;
     percent: number;
+}
+
+export interface User {
+    id: number;
+    name: string;
+    email: string;
+    avatar: string;
+    badge?: string;
+    showChevron?: boolean;
+    subText?: string;
+    icon?: string;
+    group?: string;
+}
+
+export interface PaginatedResponse<T> {
+    data: T[];
+    totalCount: number;
+    hasMore: boolean;
+    page: number;
+    pageSize: number;
 }

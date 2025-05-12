@@ -1,8 +1,8 @@
-import { Component, TemplateRef, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ListComponent } from './list/list.component';
-import { DataService, User, PaginatedResponse } from './data.service';
-import {AppListDataSource} from "./models/list.model";
+import {Component, TemplateRef, ViewChild} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {ListComponent} from './list/list.component';
+import {DataService} from './services/data.service';
+import {AppListDataSource, User} from "./list/models/list.model";
 
 @Component({
   selector: 'app-list-root',

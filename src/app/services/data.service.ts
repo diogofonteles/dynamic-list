@@ -1,25 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, delay } from 'rxjs';
-
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-  avatar: string;
-  badge?: string;
-  showChevron?: boolean;
-  subText?: string;
-  icon?: string;
-  group?: string;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  totalCount: number;
-  hasMore: boolean;
-  page: number;
-  pageSize: number;
-}
+import {PaginatedResponse, User} from '../list/models/list.model';
 
 @Injectable({
   providedIn: 'root'

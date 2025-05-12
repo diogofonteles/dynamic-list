@@ -1,0 +1,36 @@
+<div class="list-item"
+     [class.selected]="selected()"
+     [class.disabled]="disabled()"
+     (click)="onClick($event)">
+
+    @if (template()) {
+        <ng-container [ngTemplateOutlet]="template()!" [ngTemplateOutletContext]="{ $implicit: item() }"></ng-container>
+    } @else {
+        <div class="item-content">
+            @if (item()?.icon) {
+                <div class="item-icon">
+                    <i class="icon">{{ item().icon }}</i>
+                </div>
+            }
+
+            <div class="item-text">
+                <div class="item-main-text">{{ displayText() }}</div>
+                @if (item()?.subText) {
+                    <div class="item-sub-text">{{ item().subText }}</div>
+                }
+            </div>
+
+            @if (item()?.badge) {
+                <div class="item-badge">
+                    <span class="badge">{{ item().badge }}</span>
+                </div>
+            }
+
+            @if (item()?.showChevron) {
+                <div class="item-chevron">
+                    <i class="icon chevron-right"></i>
+                </div>
+            }
+        </div>
+    }
+</div>

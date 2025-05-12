@@ -19,13 +19,13 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
-import { AppListItemComponent } from '../app-list-item.component';
-import {AppListDataSource, GroupedItems, ItemClickEvent, ScrollEvent} from '../models/list.model';
+import { ListItemComponent } from './components/list-item/list-item.component';
+import {AppListDataSource, GroupedItems, ItemClickEvent, ScrollEvent} from './models/list.model';
 
 @Component({
   selector: 'list',
   standalone: true,
-  imports: [CommonModule, AppListItemComponent],
+  imports: [CommonModule, ListItemComponent],
   templateUrl: 'list.component.html',
   styleUrls: ['list.component.scss'],
 })
@@ -109,8 +109,8 @@ export class ListComponent
     isComplete: boolean;
   }>();
 
-  @ContentChildren(AppListItemComponent)
-  itemsChildren!: QueryList<AppListItemComponent>;
+  @ContentChildren(ListItemComponent)
+  itemsChildren!: QueryList<ListItemComponent>;
 
   isLoadingSignal = signal<boolean>(false);
   isPageLoadingSignal = signal<boolean>(false);

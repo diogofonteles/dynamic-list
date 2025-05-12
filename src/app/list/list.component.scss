@@ -13,7 +13,7 @@
   padding: 8px;
   border-bottom: 1px solid #eee;
   z-index: 2;
-  flex-shrink: 0;  /* Impede que a caixa de busca encolha */
+  flex-shrink: 0;
 }
 
 .list-search-input {
@@ -29,7 +29,7 @@
   overflow-y: scroll;
   position: relative;
   scroll-behavior: smooth;
-  min-height: 0;  /* Importante para o scrolling em flexbox */
+  min-height: 0;
 }
 
 .list-content.native-scroll {
@@ -118,7 +118,6 @@
   display: block;
 }
 
-/* Estilização da barra de rolagem */
 .list-content::-webkit-scrollbar {
   width: 8px;
 }
