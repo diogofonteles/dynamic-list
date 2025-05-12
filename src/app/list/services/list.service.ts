@@ -16,11 +16,9 @@ import {
   providedIn: "root",
 })
 export class ListService<T extends AppListItem = AppListItem> {
-  // State signals
   isLoading = signal<boolean>(false);
   isPageLoading = signal<boolean>(false);
 
-  // State variables
   private _currentPage = 1;
   private _hasMoreItems = false;
   private _totalItems = 0;
@@ -31,9 +29,6 @@ export class ListService<T extends AppListItem = AppListItem> {
 
   constructor() {}
 
-  /**
-   * Carrega dados da fonte de dados
-   */
   loadData(
     dataSource: AppListDataSource<T> | T[] | null,
     searchValue: string = "",
@@ -60,7 +55,6 @@ export class ListService<T extends AppListItem = AppListItem> {
     if (!isPageLoad) {
       this.isLoading.set(true);
       this._currentPage = 1;
-      // Limpar os itens existentes ao iniciar uma nova carga (não paginada)
       this._items = [];
       this._totalItems = 0;
       this._loadedItems = 0;
@@ -69,7 +63,6 @@ export class ListService<T extends AppListItem = AppListItem> {
       this._isPreloading = false;
     }
 
-    // Se for um array, processa diretamente
     if (Array.isArray(dataSource)) {
       if (!isPageLoad) {
         this._items = [...dataSource];
@@ -98,7 +91,6 @@ export class ListService<T extends AppListItem = AppListItem> {
       });
     }
 
-    // Se for um objeto com método load
     if (typeof dataSource === "object" && dataSource.load) {
       const resultSubject = new BehaviorSubject<{
         items: T[];
@@ -112,7 +104,6 @@ export class ListService<T extends AppListItem = AppListItem> {
         loadProgress: this.createLoadProgressEvent(0, 0),
       });
 
-      // Carregar dados do dataSource
       const pageToLoad = isPageLoad ? this._currentPage + 1 : 1;
 
       dataSource.load(pageToLoad, pageSize, searchValue).subscribe({
@@ -120,40 +111,32 @@ export class ListService<T extends AppListItem = AppListItem> {
           let updatedItems: T[] = [];
 
           if (!isPageLoad) {
-            // Nova carga (não é paginação)
             updatedItems = [...response.data];
             this._totalItems = response.totalCount;
             this._loadedItems = response.data.length;
           } else {
-            // Paginação - anexar novos itens
             updatedItems = [...this._items, ...response.data];
             this._loadedItems += response.data.length;
 
-            // Incrementar a página apenas após carregar dados com sucesso
             this._currentPage = pageToLoad;
           }
 
-          // Atualizar a lista de itens
           this._items = updatedItems;
           this._hasMoreItems = response.hasMore;
 
-          // Agrupar itens se necessário
           const groupedItems = grouped
             ? this.groupItems(this._items, groupBy, collapsedGroups)
             : [];
           this._groupedItems = groupedItems;
 
-          // Atualizar sinais de estado
           this.isLoading.set(false);
           this.isPageLoading.set(false);
 
-          // Criar evento de progresso
           const loadProgress = this.createLoadProgressEvent(
             this._loadedItems,
             this._totalItems
           );
 
-          // Emitir resultado
           resultSubject.next({
             items: updatedItems,
             groupedItems,
@@ -167,7 +150,6 @@ export class ListService<T extends AppListItem = AppListItem> {
           this.isPageLoading.set(false);
           this._isPreloading = false;
 
-          // Reportar o erro, mas não completar o subject
           resultSubject.error(error);
         },
       });
@@ -175,7 +157,6 @@ export class ListService<T extends AppListItem = AppListItem> {
       return resultSubject.asObservable();
     }
 
-    // Retorno padrão se nada corresponder
     return of({
       items: [],
       groupedItems: [],
@@ -184,9 +165,6 @@ export class ListService<T extends AppListItem = AppListItem> {
     });
   }
 
-  /**
-   * Agrupa itens por uma propriedade específica
-   */
   groupItems(
     items: T[],
     groupBy: string,
@@ -217,9 +195,6 @@ export class ListService<T extends AppListItem = AppListItem> {
     return groupedItems.sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  /**
-   * Gerencia a seleção de itens com base no modo de seleção
-   */
   handleSelection(
     item: T,
     selectionMode: SelectionMode | string,
@@ -271,9 +246,6 @@ export class ListService<T extends AppListItem = AppListItem> {
     };
   }
 
-  /**
-   * Obtém o valor da chave de um item com base na expressão de chave
-   */
   getItemKeyValue(item: T, keyExpr: string | Function): any {
     if (typeof keyExpr === "string") {
       return item[keyExpr];
@@ -283,9 +255,6 @@ export class ListService<T extends AppListItem = AppListItem> {
     return item.id || item;
   }
 
-  /**
-   * Verifica se um item está selecionado
-   */
   isItemSelected(
     item: T,
     selectedItemKeys: any[],
@@ -295,9 +264,6 @@ export class ListService<T extends AppListItem = AppListItem> {
     return selectedItemKeys.includes(key);
   }
 
-  /**
-   * Verifica se deve pré-carregar mais itens
-   */
   shouldPreload(
     scrollTop: number,
     scrollHeight: number,
@@ -318,23 +284,14 @@ export class ListService<T extends AppListItem = AppListItem> {
     return scrolledPercent >= threshold && scrollDirection === "down";
   }
 
-  /**
-   * Marca o início do pré-carregamento
-   */
   startPreloading(): void {
     this._isPreloading = true;
   }
 
-  /**
-   * Verifica se há mais itens para carregar
-   */
   hasMoreItems(): boolean {
     return this._hasMoreItems;
   }
 
-  /**
-   * Cria um evento de progresso de carregamento
-   */
   private createLoadProgressEvent(
     loaded: number,
     total: number
@@ -349,9 +306,6 @@ export class ListService<T extends AppListItem = AppListItem> {
     };
   }
 
-  /**
-   * Reseta o estado do serviço
-   */
   resetState(): void {
     this._currentPage = 1;
     this._hasMoreItems = false;

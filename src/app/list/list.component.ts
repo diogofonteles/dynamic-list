@@ -41,11 +41,9 @@ import {
   ScrollEvent,
   AppListItem,
   PaginatedResponse,
-  // Enums
   SelectionMode,
   PageLoadMode,
   ScrollDirection,
-  // Constantes
   DEFAULT_HEIGHT,
   DEFAULT_WIDTH,
   DEFAULT_PRELOAD_THRESHOLD,
@@ -54,7 +52,6 @@ import {
   SCROLL_DEBOUNCE_TIME,
   SCROLL_END_THRESHOLD,
   PRELOAD_CHECK_DELAY,
-  // Interfaces de eventos
   LoadProgressEvent,
   SelectionChangeEvent,
   GroupExpansionEvent,
@@ -74,7 +71,6 @@ export class ListComponent<T extends AppListItem = AppListItem>
   @ViewChild("scrollContainer") scrollContainer!: ElementRef<HTMLDivElement>;
   @ViewChild("container") container!: ElementRef<HTMLDivElement>;
 
-  // Input signals
   dataSource = input<AppListDataSource<T> | T[] | null>(null);
   width = input<string | number | undefined>(undefined);
   height = input<string | number | undefined>(undefined);
@@ -96,12 +92,10 @@ export class ListComponent<T extends AppListItem = AppListItem>
   groupBy = input<string>("group");
   pageSize = input<number>(DEFAULT_PAGE_SIZE);
 
-  // Model signals (two-way binding)
   selectedItems = model<T[]>([]);
   selectedItemKeys = model<any[]>([]);
   collapsedGroups = model<string[]>([]);
 
-  // Backward compatibility for items
   @Input() set items(value: Array<T>) {
     this._items = value || [];
     if (this.grouped()) {
@@ -115,7 +109,6 @@ export class ListComponent<T extends AppListItem = AppListItem>
 
   _items: Array<T> = [];
 
-  // Output signals
   itemClick = output<ItemClickEvent<T>>();
   scrollEvent = output<ScrollEvent>();
   selectionChanged = output<SelectionChangeEvent<T>>();
@@ -128,20 +121,16 @@ export class ListComponent<T extends AppListItem = AppListItem>
   @ContentChildren(ListItemComponent)
   itemsChildren!: QueryList<ListItemComponent>;
 
-  // DI
   private cdr = inject(ChangeDetectorRef);
   private destroyRef = inject(DestroyRef);
   private listService = inject(ListService<T>);
 
-  // State signals (agora usando signals do serviço)
   isLoadingSignal = this.listService.isLoading;
   isPageLoadingSignal = this.listService.isPageLoading;
   searchValueSignal = signal<string>("");
 
-  // State variables
   groupedItems: GroupedItems<T>[] = [];
 
-  // RxJS subjects
   private readonly destroy$ = new Subject<void>();
   private readonly searchSubject = new Subject<string>();
   private readonly scrollSubject = new Subject<Event>();
@@ -149,7 +138,6 @@ export class ListComponent<T extends AppListItem = AppListItem>
   private lastScrollTop = 0;
   private loadSubscription?: Subscription;
 
-  // Computed styles
   heightStyle = computed(() => {
     if (this.height() !== undefined) {
       return typeof this.height() === "number"
@@ -169,19 +157,16 @@ export class ListComponent<T extends AppListItem = AppListItem>
   });
 
   constructor() {
-    // Setup search debounce
     this.searchSubject
       .pipe(
         debounceTime(this.searchTimeoutDelay()),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe(() => {
-        // Resetar o estado do serviço quando uma nova busca for realizada
         this.listService.resetState();
         this.loadData();
       });
 
-    // Setup scroll throttling
     this.scrollSubject
       .pipe(
         throttleTime(SCROLL_DEBOUNCE_TIME),
@@ -200,7 +185,6 @@ export class ListComponent<T extends AppListItem = AppListItem>
     if (this.scrollContainer) {
       this.scrollContainer.nativeElement.style.overflowY = "scroll";
 
-      // Use RxJS instead of setTimeout
       timer(0)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(() => {
@@ -221,21 +205,17 @@ export class ListComponent<T extends AppListItem = AppListItem>
 
   private loadData(isPageLoad = false): Promise<void> {
     return new Promise<void>((resolve) => {
-      // Cancelar qualquer carregamento de dados em andamento
       if (this.loadSubscription) {
         this.loadSubscription.unsubscribe();
         this.loadSubscription = undefined;
       }
 
-      // Se não for carregamento de página (paginação), resetar o estado
       if (!isPageLoad) {
         this._items = [];
       }
 
-      // Guardar uma cópia dos itens atuais antes de carregar mais
       const existingItems = [...this._items];
 
-      // Usar o serviço para carregar dados
       this.loadSubscription = this.listService
         .loadData(
           this.dataSource(),
@@ -250,19 +230,15 @@ export class ListComponent<T extends AppListItem = AppListItem>
         .subscribe({
           next: (result) => {
             if (!isPageLoad) {
-              // Se não for paginação, substituir os itens
               this._items = result.items;
             } else {
-              // Para paginação, manter os itens existentes e adicionar os novos
               if (existingItems.length > 0) {
-                // Se já temos itens, verificamos que os novos itens do serviço incluem os existentes mais os novos
                 const existingIds = new Set(
                   existingItems.map((item) =>
                     this.listService.getItemKeyValue(item, this.keyExpr())
                   )
                 );
 
-                // Filtrar apenas os itens novos que não estão na lista existente
                 const newItems = result.items.filter(
                   (item) =>
                     !existingIds.has(
@@ -270,15 +246,12 @@ export class ListComponent<T extends AppListItem = AppListItem>
                     )
                 );
 
-                // Manter os itens existentes e adicionar apenas os novos
                 this._items = [...existingItems, ...newItems];
               } else {
-                // Se não temos itens, usamos os do serviço
                 this._items = result.items;
               }
             }
 
-            // Atualizar os grupos
             this.groupedItems = this.grouped()
               ? this.listService.groupItems(
                   this._items,
@@ -302,12 +275,10 @@ export class ListComponent<T extends AppListItem = AppListItem>
                 });
             }
 
-            resolve(); // Resolver a promessa quando o carregamento for concluído
           },
           error: (error) => {
             console.error("Error loading data:", error);
             this.cdr.detectChanges();
-            resolve(); // Resolver a promessa mesmo em caso de erro
           },
         });
 
@@ -318,7 +289,6 @@ export class ListComponent<T extends AppListItem = AppListItem>
   }
 
   private groupItems(): void {
-    // Usar o serviço para agrupar itens
     this.groupedItems = this.listService.groupItems(
       this._items,
       this.groupBy(),
@@ -330,11 +300,9 @@ export class ListComponent<T extends AppListItem = AppListItem>
     const target = event.target as HTMLInputElement;
     const value = target.value;
 
-    // Valor de pesquisa alterado - precisamos redefinir o estado
     this.searchValueSignal.set(value);
     this.searchValueChange.emit(value);
 
-    // Use RxJS subject para debouncing
     this.searchSubject.next(value);
   }
 
@@ -368,7 +336,6 @@ export class ListComponent<T extends AppListItem = AppListItem>
   }
 
   handleScroll(event: Event): void {
-    // Use RxJS subject for throttling
     this.scrollSubject.next(event);
   }
 
@@ -411,7 +378,6 @@ export class ListComponent<T extends AppListItem = AppListItem>
     const scrollHeight = element.scrollHeight;
     const clientHeight = element.clientHeight;
 
-    // Usar o serviço para verificar se deve pré-carregar
     const shouldPreload = this.listService.shouldPreload(
       scrollTop,
       scrollHeight,
@@ -447,7 +413,6 @@ export class ListComponent<T extends AppListItem = AppListItem>
   }
 
   private toggleSelection(item: T): void {
-    // Usar o serviço para gerenciar a seleção
     const result = this.listService.handleSelection(
       item,
       this.selectionMode(),
@@ -462,7 +427,6 @@ export class ListComponent<T extends AppListItem = AppListItem>
   }
 
   isItemSelected(item: T): boolean {
-    // Usar o serviço para verificar se um item está selecionado
     return this.listService.isItemSelected(
       item,
       this.selectedItemKeys(),
@@ -478,15 +442,12 @@ export class ListComponent<T extends AppListItem = AppListItem>
 
   loadMore(): void {
     if (this.listService.hasMoreItems() && !this.isPageLoadingSignal()) {
-      // Armazenar a posição atual de scroll para restaurar após o carregamento
       const scrollPosition = this.scrollContainer
         ? this.scrollContainer.nativeElement.scrollTop
         : 0;
 
       this.loadData(true).then(() => {
-        // Restaurar a posição de scroll depois que a lista for atualizada
         if (this.scrollContainer) {
-          // Usar um timer para garantir que a renderização dos novos itens foi concluída
           timer(10).subscribe(() => {
             this.scrollContainer.nativeElement.scrollTop = scrollPosition;
           });
