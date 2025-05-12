@@ -1,24 +1,25 @@
 <div class="list-container" #container
-     [class.scrollable]="scrollingEnabled"
+     [class.scrollable]="scrollingEnabled()"
      [style.height]="heightStyle()"
      [style.width]="widthStyle()">
 
-    @if (searchEnabled) {
+    @if (searchEnabled()) {
         <div class="list-search">
             <input
                     type="text"
                     class="list-search-input"
-                    [placeholder]="searchPlaceholder || 'Search...'"
+                    [placeholder]="searchPlaceholder() || 'Search...'"
                     [value]="searchValueSignal()"
                     (input)="handleSearchInput($event)"
-                    (change)="handleSearchChange($event)">
+                    (change)="handleSearchChange($event)"
+                    title="Search input">
         </div>
     }
 
     <div class="list-content"
          #scrollContainer
          (scroll)="handleScroll($event)"
-         [class.native-scroll]="useNativeScrolling">
+         [class.native-scroll]="useNativeScrolling()">
 
         @if (isLoadingSignal() && !isPageLoadingSignal() && _items.length === 0) {
             <div class="list-loading">
@@ -31,11 +32,11 @@
 
         @if (!isLoadingSignal() && !isPageLoadingSignal() && _items.length === 0) {
             <div class="list-no-data">
-                {{ noDataText || 'No data to display' }}
+                {{ noDataText() || 'No data to display' }}
             </div>
         }
 
-        @if (!isLoadingSignal() && grouped && groupedItems.length > 0) {
+        @if (!isLoadingSignal() && grouped() && groupedItems.length > 0) {
             <div class="list-grouped">
                 @for (group of groupedItems; track group.name) {
                     <!-- Group Header -->
@@ -57,8 +58,8 @@
                                         [item]="item"
                                         [index]="$index"
                                         [selected]="isItemSelected(item)"
-                                        [disabled]="item.disabled || disabled"
-                                        [template]="item.template || itemTemplate"
+                                        [disabled]="item.disabled || disabled()"
+                                        [template]="item.template || itemTemplate()"
                                         (clickEvent)="handleItemClick($event, item, $index, group.name)">
                                 </list-item>
                             }
@@ -68,15 +69,15 @@
             </div>
         }
 
-        @if (!isLoadingSignal() && !grouped && _items.length > 0) {
+        @if (!isLoadingSignal() && !grouped() && _items.length > 0) {
             <div class="list-items">
                 @for (item of _items; track trackByFn($index, item)) {
                     <list-item
                             [item]="item"
                             [index]="$index"
                             [selected]="isItemSelected(item)"
-                            [disabled]="item.disabled || disabled"
-                            [template]="item.template || itemTemplate"
+                            [disabled]="item.disabled || disabled()"
+                            [template]="item.template || itemTemplate()"
                             (clickEvent)="handleItemClick($event, item, $index)">
                     </list-item>
                 }
@@ -87,7 +88,7 @@
             <div class="list-page-loading">
                 <div class="loading-indicator">
                     <div class="loading-spinner"></div>
-                    <div class="loading-text">{{ pageLoadingText || 'Loading more...' }}</div>
+                    <div class="loading-text">{{ pageLoadingText() || 'Loading more...' }}</div>
                 </div>
             </div>
         }

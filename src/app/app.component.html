@@ -16,13 +16,13 @@
                     [dataSource]="userDataSource"
                     [height]="350"
                     [searchEnabled]="true"
-                    searchPlaceholder="Search users..."
+                    [searchPlaceholder]="'Search users...'"
                     [selectionMode]="'single'"
                     [pageLoadMode]="'scrollBottom'"
                     [grouped]="true"
                     [pageSize]="15"
                     [preloadThreshold]="80"
-                    groupBy="group"
+                    [groupBy]="'group'"
                     (itemClick)="onUserClick($event)"
                     (selectionChanged)="onUserSelectionChanged($event)"
                     (groupExpansionChanged)="onGroupExpansionChanged($event)"
@@ -50,11 +50,11 @@
                     [dataSource]="productDataSource"
                     [height]="350"
                     [searchEnabled]="true"
-                    searchPlaceholder="Search products..."
+                    [searchPlaceholder]="'Search products...'"
                     [grouped]="true"
                     [pageSize]="15"
                     [preloadThreshold]="80"
-                    groupBy="group"
+                    [groupBy]="'group'"
                     (itemClick)="onProductClick($event)">
             </list>
         </div>
@@ -67,7 +67,7 @@
                     [selectionMode]="'multiple'"
                     [itemTemplate]="customItemTemplate"
                     [grouped]="true"
-                    groupBy="category"
+                    [groupBy]="'category'"
                     (itemClick)="onItemClick($event)">
             </list>
         </div>

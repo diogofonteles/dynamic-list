@@ -16,78 +16,69 @@ import {
   signal,
   computed,
   input,
-} from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { Subscription } from 'rxjs';
-import { ListItemComponent } from './components/list-item/list-item.component';
-import {AppListDataSource, GroupedItems, ItemClickEvent, ScrollEvent} from './models/list.model';
+  model,
+  InputSignal,
+  ModelSignal,
+} from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { Subscription } from "rxjs";
+import { ListItemComponent } from "./components/list-item/list-item.component";
+import {
+  AppListDataSource,
+  GroupedItems,
+  ItemClickEvent,
+  ScrollEvent,
+} from "./models/list.model";
 
 @Component({
-  selector: 'list',
+  selector: "list",
   standalone: true,
   imports: [CommonModule, ListItemComponent],
-  templateUrl: 'list.component.html',
-  styleUrls: ['list.component.scss'],
+  templateUrl: "list.component.html",
+  styleUrls: ["list.component.scss"],
 })
 export class ListComponent
   implements OnInit, OnDestroy, AfterViewInit, OnChanges
 {
-  @ViewChild('scrollContainer') scrollContainer!: ElementRef<HTMLDivElement>;
-  @ViewChild('container') container!: ElementRef<HTMLDivElement>;
+  @ViewChild("scrollContainer") scrollContainer!: ElementRef<HTMLDivElement>;
+  @ViewChild("container") container!: ElementRef<HTMLDivElement>;
 
-  @Input()
-  get dataSource(): AppListDataSource | any[] | null {
-    return this._dataSource;
-  }
-  set dataSource(value: AppListDataSource | any[] | null) {
-    this._dataSource = value;
-    this.currentPage = 1;
-    this._items = [];
-    this.loadData();
-  }
-  private _dataSource: AppListDataSource | any[] | null = null;
+  dataSource = input<AppListDataSource | any[] | null>(null);
+  width = input<string | number | undefined>(undefined);
+  height = input<string | number | undefined>(undefined);
+  disabled = input<boolean>(false);
+  visible = input<boolean>(true);
+  scrollingEnabled = input<boolean>(true);
+  useNativeScrolling = input<boolean>(true);
+  pageLoadMode = input<"nextButton" | "scrollBottom" | "none">("scrollBottom");
+  preloadThreshold = input<number>(80);
+  searchEnabled = input<boolean>(false);
+  searchPlaceholder = input<string | undefined>(undefined);
+  searchTimeoutDelay = input<number>(500);
+  selectionMode = input<"single" | "multiple" | "none">("none");
+  selectedItems = model<any[]>([]);
+  selectedItemKeys = model<any[]>([]);
+  noDataText = input<string | undefined>(undefined);
+  pageLoadingText = input<string | undefined>(undefined);
+  itemTemplate = input<any>(undefined);
+  keyExpr = input<string | Function>("id");
+  grouped = input<boolean>(true);
+  groupBy = input<string>("group");
+  collapsedGroups = model<string[]>([]);
+  pageSize = input<number>(15);
 
-  @Input()
-  get items(): any[] {
-    return this._items;
-  }
-  set items(value: any[]) {
+  @Input() set items(value: any[]) {
     this._items = value;
-    if (this.grouped) {
+    if (this.grouped()) {
       this.groupItems();
     }
   }
+
+  get items(): any[] {
+    return this._items;
+  }
+
   _items: any[] = [];
-
-  public height = input<string | number | undefined>();
-  @Input() width: string | number | undefined;
-  @Input() disabled: boolean = false;
-  @Input() visible: boolean = true;
-
-  @Input() scrollingEnabled: boolean = true;
-  @Input() useNativeScrolling: boolean = true;
-  @Input() pageLoadMode: 'nextButton' | 'scrollBottom' | 'none' =
-    'scrollBottom';
-  @Input() preloadThreshold: number = 80;
-
-  @Input() searchEnabled: boolean = false;
-  @Input() searchPlaceholder: string | undefined;
-  @Input() searchTimeoutDelay: number = 500;
-
-  @Input() selectionMode: 'single' | 'multiple' | 'none' = 'none';
-  @Input() selectedItems: any[] = [];
-  @Input() selectedItemKeys: any[] = [];
-
-  @Input() noDataText: string | undefined;
-  @Input() pageLoadingText: string | undefined;
-  @Input() itemTemplate: any;
-  @Input() keyExpr: string | Function = 'id';
-
-  @Input() grouped: boolean = true;
-  @Input() groupBy: string = 'group';
-  @Input() collapsedGroups: string[] = [];
-
-  @Input() pageSize: number = 15;
 
   @Output() itemClick = new EventEmitter<ItemClickEvent>();
   @Output() scrollEvent = new EventEmitter<ScrollEvent>();
@@ -118,24 +109,26 @@ export class ListComponent
   hasMoreItems: boolean = false;
   totalItems: number = 0;
   loadedItems: number = 0;
-  searchValueSignal = signal<string>('');
+  searchValueSignal = signal<string>("");
   groupedItems: GroupedItems[] = [];
   isPreloading: boolean = false;
 
   heightStyle = computed(() => {
     if (this.height() !== undefined) {
-      return typeof this.height() === 'number'
+      return typeof this.height() === "number"
         ? `${this.height()}px`
         : this.height();
     }
-    return '350px';
+    return "350px";
   });
 
   widthStyle = computed(() => {
-    if (this.width !== undefined) {
-      return typeof this.width === 'number' ? `${this.width}px` : this.width;
+    if (this.width() !== undefined) {
+      return typeof this.width() === "number"
+        ? `${this.width()}px`
+        : this.width();
     }
-    return '100%';
+    return "100%";
   });
 
   private loadSubscription?: Subscription;
@@ -143,7 +136,7 @@ export class ListComponent
   private searchTimeout?: any;
   private lastScrollTop: number = 0;
   private scrollDebounceTimeout?: any;
-  private scrollDirection: 'up' | 'down' = 'down';
+  private scrollDirection: "up" | "down" = "down";
 
   constructor(private cdr: ChangeDetectorRef) {}
 
@@ -155,7 +148,7 @@ export class ListComponent
 
   ngAfterViewInit() {
     if (this.scrollContainer) {
-      this.scrollContainer.nativeElement.style.overflowY = 'scroll';
+      this.scrollContainer.nativeElement.style.overflowY = "scroll";
     }
 
     setTimeout(() => {
@@ -164,7 +157,7 @@ export class ListComponent
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['preloadThreshold'] || changes['pageSize']) {
+    if (changes["preloadThreshold"] || changes["pageSize"]) {
       this.checkPreloadCondition();
     }
   }
@@ -189,17 +182,18 @@ export class ListComponent
   }
 
   private loadData(isPageLoad = false) {
-    if (!this.dataSource) return;
+    const dataSourceValue = this.dataSource();
+    if (!dataSourceValue) return;
 
     if (!isPageLoad) {
       this.isLoadingSignal.set(true);
-      if (Array.isArray(this.dataSource)) {
-        this._items = [...this.dataSource];
-        this.totalItems = this.dataSource.length;
-        this.loadedItems = this.dataSource.length;
+      if (Array.isArray(dataSourceValue)) {
+        this._items = [...dataSourceValue];
+        this.totalItems = dataSourceValue.length;
+        this.loadedItems = dataSourceValue.length;
         this.hasMoreItems = false;
         this.isLoadingSignal.set(false);
-        if (this.grouped) {
+        if (this.grouped()) {
           this.groupItems();
         }
         this.contentReady.emit();
@@ -215,27 +209,27 @@ export class ListComponent
       this.loadSubscription.unsubscribe();
     }
 
-    if (Array.isArray(this.dataSource)) {
+    if (Array.isArray(dataSourceValue)) {
       if (!isPageLoad) {
-        this._items = [...this.dataSource];
-        this.totalItems = this.dataSource.length;
-        this.loadedItems = this.dataSource.length;
+        this._items = [...dataSourceValue];
+        this.totalItems = dataSourceValue.length;
+        this.loadedItems = dataSourceValue.length;
         this.hasMoreItems = false;
       } else {
         this.isPageLoadingSignal.set(false);
       }
 
-      if (this.grouped) {
+      if (this.grouped()) {
         this.groupItems();
       }
 
       this.isLoadingSignal.set(false);
       this.contentReady.emit();
       this.emitLoadProgress();
-    } else if (typeof this.dataSource === 'object' && this.dataSource.load) {
-      const currentPageSize = this.pageSize;
+    } else if (typeof dataSourceValue === "object" && dataSourceValue.load) {
+      const currentPageSize = this.pageSize();
 
-      this.loadSubscription = this.dataSource
+      this.loadSubscription = dataSourceValue
         .load(this.currentPage, currentPageSize, this.searchValueSignal())
         .subscribe({
           next: (response) => {
@@ -250,7 +244,7 @@ export class ListComponent
 
             this.hasMoreItems = response.hasMore;
 
-            if (this.grouped) {
+            if (this.grouped()) {
               this.groupItems();
             }
 
@@ -267,7 +261,7 @@ export class ListComponent
             }
           },
           error: (error) => {
-            console.error('Error loading data:', error);
+            console.error("Error loading data:", error);
             this.isLoadingSignal.set(false);
             this.isPageLoadingSignal.set(false);
             this.isPreloading = false;
@@ -296,9 +290,10 @@ export class ListComponent
     }
 
     const groups: { [key: string]: any[] } = {};
+    const groupByValue = this.groupBy();
 
     for (const item of this._items) {
-      const groupValue = item[this.groupBy] || 'Ungrouped';
+      const groupValue = item[groupByValue] || "Ungrouped";
       if (!groups[groupValue]) {
         groups[groupValue] = [];
       }
@@ -308,7 +303,7 @@ export class ListComponent
     this.groupedItems = Object.keys(groups).map((groupName) => {
       return {
         name: groupName,
-        expanded: !this.collapsedGroups.includes(groupName),
+        expanded: !this.collapsedGroups().includes(groupName),
         items: groups[groupName],
       };
     });
@@ -327,7 +322,7 @@ export class ListComponent
 
     this.searchTimeout = setTimeout(() => {
       this.handleSearchChange(event);
-    }, this.searchTimeoutDelay);
+    }, this.searchTimeoutDelay());
   }
 
   handleSearchChange(event: any) {
@@ -342,7 +337,7 @@ export class ListComponent
     index: number,
     groupName?: string
   ) {
-    if (this.disabled || item.disabled) return;
+    if (this.disabled() || item.disabled) return;
 
     const clickEvent: ItemClickEvent = {
       itemData: item,
@@ -351,7 +346,7 @@ export class ListComponent
       groupName: groupName,
     };
 
-    if (this.selectionMode !== 'none') {
+    if (this.selectionMode() !== "none") {
       this.toggleSelection(item);
     }
 
@@ -371,7 +366,7 @@ export class ListComponent
 
       const percent = (scrollTop / (scrollHeight - clientHeight)) * 100;
 
-      this.scrollDirection = scrollTop > this.lastScrollTop ? 'down' : 'up';
+      this.scrollDirection = scrollTop > this.lastScrollTop ? "down" : "up";
       this.lastScrollTop = scrollTop;
 
       const reachEnd = scrollTop + clientHeight >= scrollHeight - 20;
@@ -409,8 +404,8 @@ export class ListComponent
     const scrolledPercent = ((scrollTop + clientHeight) / scrollHeight) * 100;
 
     if (
-      scrolledPercent >= this.preloadThreshold &&
-      this.scrollDirection === 'down'
+      scrolledPercent >= this.preloadThreshold() &&
+      this.scrollDirection === "down"
     ) {
       this.isPreloading = true;
       this.loadMore();
@@ -425,12 +420,13 @@ export class ListComponent
       expanded: group.expanded,
     });
 
+    const currentCollapsedGroups = this.collapsedGroups();
     if (group.expanded) {
-      this.collapsedGroups = this.collapsedGroups.filter(
-        (g) => g !== group.name
+      this.collapsedGroups.set(
+        currentCollapsedGroups.filter((g) => g !== group.name)
       );
-    } else if (!this.collapsedGroups.includes(group.name)) {
-      this.collapsedGroups.push(group.name);
+    } else if (!currentCollapsedGroups.includes(group.name)) {
+      this.collapsedGroups.set([...currentCollapsedGroups, group.name]);
     }
 
     this.cdr.detectChanges();
@@ -438,29 +434,35 @@ export class ListComponent
 
   private toggleSelection(item: any) {
     const key = this.getItemKeyValue(item);
-    const index = this.selectedItemKeys.indexOf(key);
+    const currentSelectedItemKeys = this.selectedItemKeys();
+    const index = currentSelectedItemKeys.indexOf(key);
+    const currentSelectedItems = this.selectedItems();
 
-    if (this.selectionMode === 'single') {
-      const previousSelected = [...this.selectedItems];
-      this.selectedItems = [item];
-      this.selectedItemKeys = [key];
+    if (this.selectionMode() === "single") {
+      const previousSelected = [...currentSelectedItems];
+      this.selectedItems.set([item]);
+      this.selectedItemKeys.set([key]);
       this.selectionChanged.emit({
         addedItems: [item],
         removedItems: previousSelected.filter(
           (i) => this.getItemKeyValue(i) !== key
         ),
       });
-    } else if (this.selectionMode === 'multiple') {
+    } else if (this.selectionMode() === "multiple") {
       if (index > -1) {
-        this.selectedItems.splice(index, 1);
-        this.selectedItemKeys.splice(index, 1);
+        const newSelectedItems = [...currentSelectedItems];
+        const newSelectedItemKeys = [...currentSelectedItemKeys];
+        newSelectedItems.splice(index, 1);
+        newSelectedItemKeys.splice(index, 1);
+        this.selectedItems.set(newSelectedItems);
+        this.selectedItemKeys.set(newSelectedItemKeys);
         this.selectionChanged.emit({
           addedItems: [],
           removedItems: [item],
         });
       } else {
-        this.selectedItems.push(item);
-        this.selectedItemKeys.push(key);
+        this.selectedItems.set([...currentSelectedItems, item]);
+        this.selectedItemKeys.set([...currentSelectedItemKeys, key]);
         this.selectionChanged.emit({
           addedItems: [item],
           removedItems: [],
@@ -470,25 +472,27 @@ export class ListComponent
   }
 
   private getItemKeyValue(item: any): any {
-    if (typeof this.keyExpr === 'string') {
-      return item[this.keyExpr];
-    } else if (typeof this.keyExpr === 'function') {
-      return this.keyExpr(item);
+    const keyExprValue = this.keyExpr();
+    if (typeof keyExprValue === "string") {
+      return item[keyExprValue];
+    } else if (typeof keyExprValue === "function") {
+      return keyExprValue(item);
     }
     return item.id || item;
   }
 
   isItemSelected(item: any): boolean {
     const key = this.getItemKeyValue(item);
-    return this.selectedItemKeys.includes(key);
+    return this.selectedItemKeys().includes(key);
   }
 
   trackByFn(index: number, item: any): any {
     if (!item) return index;
-    if (typeof this.keyExpr === 'string') {
-      return item[this.keyExpr] || index;
-    } else if (typeof this.keyExpr === 'function') {
-      return this.keyExpr(item) || index;
+    const keyExprValue = this.keyExpr();
+    if (typeof keyExprValue === "string") {
+      return item[keyExprValue] || index;
+    } else if (typeof keyExprValue === "function") {
+      return keyExprValue(item) || index;
     }
     return item.id || index;
   }
