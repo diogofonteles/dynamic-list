@@ -1,5 +1,6 @@
 .list-item {
   cursor: pointer;
+  -webkit-user-select: none;
   user-select: none;
   transition: background-color 0.2s ease;
   border-bottom: 1px solid #eee;

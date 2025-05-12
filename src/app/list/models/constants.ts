@@ -1,4 +1,3 @@
-
 export const DEFAULT_HEIGHT = "350px";
 export const DEFAULT_WIDTH = "100%";
 export const DEFAULT_PRELOAD_THRESHOLD = 80;

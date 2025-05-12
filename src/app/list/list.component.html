@@ -1,29 +1,32 @@
-<div class="list-container" #container
+<div [class]="containerClass()"
+     [class.theme-dark]="theme() === 'dark'"
      [class.scrollable]="scrollingEnabled()"
-     [style.height]="heightStyle()"
-     [style.width]="widthStyle()">
+     [ngStyle]="containerStyles()"
+     #container>
 
     @if (searchEnabled()) {
-        <div class="list-search">
+        <div [class]="searchContainerClass()">
             <input
                     type="text"
-                    class="list-search-input"
+                    [class]="searchInputClass()"
                     [placeholder]="searchPlaceholder() || 'Search...'"
                     [value]="searchValueSignal()"
                     (input)="handleSearchInput($event)"
                     (change)="handleSearchChange($event)"
-                    title="Search input">
+                    title="Search input"
+                    [ngStyle]="styles().searchInput">
         </div>
     }
 
-    <div class="list-content"
+    <div [class]="contentClass()"
          #scrollContainer
          (scroll)="handleScroll($event)"
          [class.native-scroll]="useNativeScrolling()"
-         [class.loading-more]="isPageLoadingSignal()">
+         [class.loading-more]="isPageLoadingSignal()"
+         [ngStyle]="styles().content">
 
         @if (isLoadingSignal() && !isPageLoadingSignal() && _items.length === 0) {
-            <div class="list-loading">
+            <div [class]="loadingClass()">
                 <div class="loading-indicator">
                     <div class="loading-spinner"></div>
                     <div class="loading-text">Loading...</div>
@@ -32,18 +35,20 @@
         }
 
         @if (!isLoadingSignal() && !isPageLoadingSignal() && _items.length === 0) {
-            <div class="list-no-data">
+            <div [class]="noDataClass()">
                 {{ noDataText() || 'No data to display' }}
             </div>
         }
 
         @if (!isLoadingSignal() && grouped() && groupedItems.length > 0) {
-            <div class="list-grouped">
+            <div [class]="groupedListClass()" [ngStyle]="styles().listItems">
                 @for (group of groupedItems; track group.name) {
                     <!-- Group Header -->
-                    <div class="group-header" (click)="toggleGroupExpansion(group)">
-                        <div class="group-title">{{ group.name }}</div>
-                        <div class="group-toggle">
+                    <div [class]="groupHeaderClass()" 
+                         (click)="toggleGroupExpansion(group)"
+                         [ngStyle]="styles().groupHeader">
+                        <div [class]="groupTitleClass()">{{ group.name }}</div>
+                        <div [class]="groupToggleClass()">
                             @if (group.expanded) {
                                 <span>▼</span>
                             } @else {
@@ -53,7 +58,7 @@
                     </div>
 
                     @if (group.expanded) {
-                        <div class="group-items">
+                        <div [class]="groupItemsClass()" [ngStyle]="styles().groupItems">
                             @for (item of group.items; track trackByFn($index, item)) {
                                 <list-item
                                         [item]="item"
@@ -71,7 +76,7 @@
         }
 
         @if (!isLoadingSignal() && !grouped() && _items.length > 0) {
-            <div class="list-items">
+            <div [class]="listItemsClass()" [ngStyle]="styles().listItems">
                 @for (item of _items; track trackByFn($index, item)) {
                     <list-item
                             [item]="item"
@@ -86,7 +91,7 @@
         }
 
         @if (isPageLoadingSignal()) {
-            <div class="list-page-loading">
+            <div [class]="pageLoadingClass()">
                 <div class="loading-indicator">
                     <div class="loading-spinner"></div>
                     <div class="loading-text">{{ pageLoadingText() || 'Loading more...' }}</div>

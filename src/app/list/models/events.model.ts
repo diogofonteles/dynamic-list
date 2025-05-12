@@ -1,4 +1,3 @@
-
 export interface LoadProgressEvent {
   loaded: number;
   total: number;
@@ -9,6 +8,8 @@ export interface LoadProgressEvent {
 export interface SelectionChangeEvent<T = any> {
   addedItems: T[];
   removedItems: T[];
+  originalAddedItems?: any[];
+  originalRemovedItems?: any[];
 }
 
 export interface GroupExpansionEvent {

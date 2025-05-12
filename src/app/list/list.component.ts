@@ -32,6 +32,7 @@ import {
   GroupedItems,
   GroupExpansionEvent,
   ItemClickEvent,
+  ListItemAdapter,
   LoadProgressEvent,
   PageLoadMode,
   PRELOAD_CHECK_DELAY,
@@ -42,7 +43,8 @@ import {
   SelectionChangeEvent,
   SelectionMode,
 } from "./models";
-import {ListService} from "./services/list.service";
+import { ListService } from "./services/list.service";
+import { createAdapter } from "./adapters/generic-item.adapter";
 
 @Component({
   selector: "list",
@@ -78,12 +80,50 @@ export class ListComponent<T extends AppListItem = AppListItem>
   groupBy = input<string>("group");
   pageSize = input<number>(DEFAULT_PAGE_SIZE);
 
+  adapter = input<ListItemAdapter<any, T> | null>(null);
+
+  cssClasses = input<{
+    container?: string;
+    content?: string;
+    searchContainer?: string;
+    searchInput?: string;
+    groupHeader?: string;
+    groupTitle?: string;
+    groupToggle?: string;
+    groupItems?: string;
+    listItems?: string;
+    noData?: string;
+    loading?: string;
+    pageLoading?: string;
+  }>({});
+
+  styles = input<{
+    container?: Record<string, string>;
+    content?: Record<string, string>;
+    searchContainer?: Record<string, string>;
+    searchInput?: Record<string, string>;
+    groupHeader?: Record<string, string>;
+    groupItems?: Record<string, string>;
+    listItems?: Record<string, string>;
+  }>({});
+
+  theme = input<"light" | "dark" | string>("light");
+
   selectedItems = model<T[]>([]);
   selectedItemKeys = model<any[]>([]);
   collapsedGroups = model<string[]>([]);
 
-  @Input() set items(value: Array<T>) {
-    this._items = value || [];
+  private _originalItems: any[] = [];
+
+  @Input() set items(value: Array<any>) {
+    this._originalItems = value || [];
+
+    if (this.adapter()) {
+      this._items = this.adapter()!.adaptArray(this._originalItems) as T[];
+    } else {
+      this._items = this._originalItems as T[];
+    }
+
     if (this.grouped()) {
       this.groupItems();
     }
@@ -91,6 +131,14 @@ export class ListComponent<T extends AppListItem = AppListItem>
 
   get items(): Array<T> {
     return this._items;
+  }
+
+  get originalSelectedItems(): any[] {
+    if (!this.adapter()) {
+      return this.selectedItems();
+    }
+
+    return this.selectedItems().map((item) => this.adapter()!.revert(item));
   }
 
   _items: Array<T> = [];
@@ -140,6 +188,112 @@ export class ListComponent<T extends AppListItem = AppListItem>
         : this.width();
     }
     return DEFAULT_WIDTH;
+  });
+
+  containerStyles = computed(() => {
+    const baseStyles = {
+      height: this.heightStyle(),
+      width: this.widthStyle(),
+    };
+
+    return { ...baseStyles, ...this.styles().container };
+  });
+
+  containerClass = computed(() => {
+    return this.cssClasses().container
+      ? `list-container ${this.cssClasses().container}`
+      : "list-container";
+  });
+
+  contentClass = computed(() => {
+    return this.cssClasses().content
+      ? `list-content ${this.cssClasses().content}`
+      : "list-content";
+  });
+
+  searchContainerClass = computed(() => {
+    return this.cssClasses().searchContainer
+      ? `list-search ${this.cssClasses().searchContainer}`
+      : "list-search";
+  });
+
+  searchInputClass = computed(() => {
+    return this.cssClasses().searchInput
+      ? `list-search-input ${this.cssClasses().searchInput}`
+      : "list-search-input";
+  });
+
+  loadingClass = computed(() => {
+    return this.cssClasses().loading
+      ? `list-loading ${this.cssClasses().loading}`
+      : "list-loading";
+  });
+
+  noDataClass = computed(() => {
+    return this.cssClasses().noData
+      ? `list-no-data ${this.cssClasses().noData}`
+      : "list-no-data";
+  });
+
+  groupedListClass = computed(() => {
+    return this.cssClasses().listItems
+      ? `list-grouped ${this.cssClasses().listItems}`
+      : "list-grouped";
+  });
+
+  listItemsClass = computed(() => {
+    return this.cssClasses().listItems
+      ? `list-items ${this.cssClasses().listItems}`
+      : "list-items";
+  });
+
+  pageLoadingClass = computed(() => {
+    return this.cssClasses().pageLoading
+      ? `list-page-loading ${this.cssClasses().pageLoading}`
+      : "list-page-loading";
+  });
+
+  groupHeaderClass = computed(() => {
+    return this.cssClasses().groupHeader
+      ? `group-header ${this.cssClasses().groupHeader}`
+      : "group-header";
+  });
+
+  groupTitleClass = computed(() => {
+    return this.cssClasses().groupTitle
+      ? `group-title ${this.cssClasses().groupTitle}`
+      : "group-title";
+  });
+
+  groupToggleClass = computed(() => {
+    return this.cssClasses().groupToggle
+      ? `group-toggle ${this.cssClasses().groupToggle}`
+      : "group-toggle";
+  });
+
+  groupItemsClass = computed(() => {
+    return this.cssClasses().groupItems
+      ? `group-items ${this.cssClasses().groupItems}`
+      : "group-items";
+  });
+
+  private getEffectiveAdapter = computed(() => {
+    if (this.adapter()) {
+      return this.adapter();
+    }
+
+    if (this._items.length > 0) {
+      const sample = this._items[0];
+      if (sample.id) {
+        return createAdapter("id");
+      } else if (sample["key"]) {
+        return createAdapter("key");
+      } else {
+        return null;
+      }
+    }
+
+    return null;
   });
 
   constructor() {
@@ -198,9 +352,11 @@ export class ListComponent<T extends AppListItem = AppListItem>
 
       if (!isPageLoad) {
         this._items = [];
+        this._originalItems = [];
       }
 
       const existingItems = [...this._items];
+      const existingOriginals = [...this._originalItems];
 
       this.loadSubscription = this.listService
         .loadData(
@@ -215,26 +371,66 @@ export class ListComponent<T extends AppListItem = AppListItem>
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (result) => {
+            let processedItems = result.items;
+            let originalItems = result.items;
+
+            if (this.adapter()) {
+              processedItems = this.adapter()!.adaptArray(result.items) as T[];
+            }
+
             if (!isPageLoad) {
-              this._items = result.items;
+              this._originalItems = originalItems;
+              this._items = processedItems;
             } else {
               if (existingItems.length > 0) {
+                const getKeyForItem = (item: any) => {
+                  if (this.adapter()) {
+                    return this.adapter()!.getKey(item);
+                  } else {
+                    return this.listService.getItemKeyValue(
+                      item,
+                      this.keyExpr()
+                    );
+                  }
+                };
+
                 const existingIds = new Set(
                   existingItems.map((item) =>
                     this.listService.getItemKeyValue(item, this.keyExpr())
                   )
                 );
 
-                const newItems = result.items.filter(
-                  (item) =>
-                    !existingIds.has(
-                      this.listService.getItemKeyValue(item, this.keyExpr())
-                    )
-                );
+                const newItems = processedItems.filter((item, index) => {
+                  const key = this.listService.getItemKeyValue(
+                    item,
+                    this.keyExpr()
+                  );
+                  const isNew = !existingIds.has(key);
+                  return isNew;
+                });
+
+                const newOriginals = originalItems.filter((item, index) => {
+                  if (this.adapter()) {
+                    const adaptedItem = processedItems[index];
+                    const key = this.listService.getItemKeyValue(
+                      adaptedItem,
+                      this.keyExpr()
+                    );
+                    return !existingIds.has(key);
+                  } else {
+                    const key = this.listService.getItemKeyValue(
+                      item,
+                      this.keyExpr()
+                    );
+                    return !existingIds.has(key);
+                  }
+                });
 
                 this._items = [...existingItems, ...newItems];
+                this._originalItems = [...existingOriginals, ...newOriginals];
               } else {
-                this._items = result.items;
+                this._items = processedItems;
+                this._originalItems = originalItems;
               }
             }
 
@@ -261,10 +457,12 @@ export class ListComponent<T extends AppListItem = AppListItem>
                 });
             }
 
+            resolve();
           },
           error: (error) => {
             console.error("Error loading data:", error);
             this.cdr.detectChanges();
+            resolve();
           },
         });
 
@@ -303,6 +501,8 @@ export class ListComponent<T extends AppListItem = AppListItem>
     groupName?: string
   ): void {
     if (this.disabled() || item.disabled) return;
+
+    const originalItem = this.adapter() ? this.adapter()!.revert(item) : item;
 
     const clickEvent: ItemClickEvent<T> = {
       itemData: item,
@@ -409,7 +609,21 @@ export class ListComponent<T extends AppListItem = AppListItem>
 
     this.selectedItems.set(result.newSelectedItems);
     this.selectedItemKeys.set(result.newSelectedItemKeys);
-    this.selectionChanged.emit(result.selectionChangeEvent);
+
+    if (this.adapter()) {
+      const selectionEvent: SelectionChangeEvent<T> = {
+        ...result.selectionChangeEvent,
+        originalAddedItems: result.selectionChangeEvent.addedItems.map((item) =>
+          this.adapter()!.revert(item)
+        ),
+        originalRemovedItems: result.selectionChangeEvent.removedItems.map(
+          (item) => this.adapter()!.revert(item)
+        ),
+      };
+      this.selectionChanged.emit(selectionEvent);
+    } else {
+      this.selectionChanged.emit(result.selectionChangeEvent);
+    }
   }
 
   isItemSelected(item: T): boolean {
@@ -422,6 +636,10 @@ export class ListComponent<T extends AppListItem = AppListItem>
 
   trackByFn(index: number, item: T): any {
     if (!item) return index;
+
+    if (this.adapter()) {
+      return this.adapter()!.getKey(item);
+    }
 
     return this.listService.getItemKeyValue(item, this.keyExpr()) || index;
   }

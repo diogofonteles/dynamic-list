@@ -4,7 +4,6 @@ import {ListComponent} from './list/list.component';
 import {DataService} from './services/data.service';
 import {AppListDataSource, AppListItem, PageLoadMode, SelectionMode, User,} from "./list/models";
 
-// Interface personalizada para os itens de tarefa
 interface TaskItem extends AppListItem {
   id: number;
   title: string;
@@ -27,7 +26,6 @@ export class AppComponent {
   @ViewChild("customItemTemplate", { static: true })
   customItemTemplate!: TemplateRef<any>;
 
-  // Expor enums para uso no template
   protected readonly SelectionMode = SelectionMode;
   protected readonly PageLoadMode = PageLoadMode;
 

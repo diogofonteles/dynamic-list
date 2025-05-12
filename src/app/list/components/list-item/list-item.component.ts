@@ -1,12 +1,12 @@
 import {Component, computed, input, output, TemplateRef} from '@angular/core';
-import {NgTemplateOutlet} from '@angular/common';
+import { NgTemplateOutlet, NgStyle } from "@angular/common";
 
 @Component({
-  selector: 'list-item',
+  selector: "list-item",
   standalone: true,
-  imports: [NgTemplateOutlet],
-  templateUrl: 'list-item.component.html',
-  styleUrls: ['list-item.component.scss'],
+  imports: [NgTemplateOutlet, NgStyle],
+  templateUrl: "list-item.component.html",
+  styleUrls: ["list-item.component.scss"],
 })
 export class ListItemComponent {
   item = input<any>(null);
@@ -15,14 +15,27 @@ export class ListItemComponent {
   disabled = input<boolean>(false);
   template = input<TemplateRef<any> | null>(null);
 
+  cssClass = input<string | undefined>(undefined);
+  contentCssClass = input<string | undefined>(undefined);
+  iconCssClass = input<string | undefined>(undefined);
+  textCssClass = input<string | undefined>(undefined);
+  badgeCssClass = input<string | undefined>(undefined);
+  styles = input<{
+    item?: Record<string, string>;
+    content?: Record<string, string>;
+    icon?: Record<string, string>;
+    text?: Record<string, string>;
+    badge?: Record<string, string>;
+  }>({});
+
   clickEvent = output<MouseEvent>();
 
   displayText = computed(() => {
     const currentItem = this.item();
 
-    if (!currentItem) return '';
+    if (!currentItem) return "";
 
-    if (typeof currentItem === 'string') {
+    if (typeof currentItem === "string") {
       return currentItem;
     }
 
@@ -47,6 +60,34 @@ export class ListItemComponent {
     }
 
     return currentItem.toString();
+  });
+
+  itemClass = computed(() => {
+    return this.cssClass() ? `list-item ${this.cssClass()}` : "list-item";
+  });
+
+  contentClass = computed(() => {
+    return this.contentCssClass()
+      ? `item-content ${this.contentCssClass()}`
+      : "item-content";
+  });
+
+  iconClass = computed(() => {
+    return this.iconCssClass()
+      ? `item-icon ${this.iconCssClass()}`
+      : "item-icon";
+  });
+
+  textClass = computed(() => {
+    return this.textCssClass()
+      ? `item-text ${this.textCssClass()}`
+      : "item-text";
+  });
+
+  badgeClass = computed(() => {
+    return this.badgeCssClass()
+      ? `item-badge ${this.badgeCssClass()}`
+      : "item-badge";
   });
 
   onClick(event: MouseEvent) {

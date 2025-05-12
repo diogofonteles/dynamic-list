@@ -64,3 +64,9 @@ export interface PaginatedResponse<T> {
     page: number;
     pageSize: number;
 }
+export interface ListItemAdapter<T, R extends AppListItem = AppListItem> {
+  adapt(sourceItem: T): R;
+  adaptArray(sourceItems: T[]): R[];
+  revert(listItem: R): T;
+  getKey(item: T | R): string | number;
+}
