@@ -1,40 +1,40 @@
 import {Observable} from "rxjs";
 
-export interface GroupedItems {
-    name: string;
-    expanded: boolean;
-    items: any[];
+export interface GroupedItems<T = any> {
+  name: string;
+  expanded: boolean;
+  items: T[];
 }
 
-export interface AppListDataSource {
-    load: (
-        page: number,
-        pageSize: number,
-        search?: string
-    ) => Observable<PaginatedResponse<any>>;
-    totalCount?: number;
-    pageSize?: number;
+export interface AppListDataSource<T = any> {
+  load: (
+    page: number,
+    pageSize: number,
+    search?: string
+  ) => Observable<PaginatedResponse<T>>;
+  totalCount?: number;
+  pageSize?: number;
 }
 
 export interface AppListItem {
-    id?: string;
-    text?: string;
-    name?: string;
-    visible?: boolean;
-    disabled?: boolean;
-    badge?: string;
-    icon?: string;
-    showChevron?: boolean;
-    template?: any;
-    group?: string;
-    [key: string]: any;
+  id?: string | number;
+  text?: string;
+  name?: string;
+  visible?: boolean;
+  disabled?: boolean;
+  badge?: string;
+  icon?: string;
+  showChevron?: boolean;
+  template?: any;
+  group?: string;
+  [key: string]: any;
 }
 
-export interface ItemClickEvent {
-    itemData: any;
-    itemElement: HTMLElement;
-    itemIndex: number;
-    groupName?: string;
+export interface ItemClickEvent<T = any> {
+  itemData: T;
+  itemElement: HTMLElement;
+  itemIndex: number;
+  groupName?: string;
 }
 
 export interface ScrollEvent {

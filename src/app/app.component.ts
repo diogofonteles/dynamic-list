@@ -2,18 +2,40 @@ import {Component, TemplateRef, ViewChild} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {ListComponent} from './list/list.component';
 import {DataService} from './services/data.service';
-import {AppListDataSource, User} from "./list/models/list.model";
+import {
+  AppListDataSource,
+  User,
+  SelectionMode,
+  PageLoadMode,
+  AppListItem,
+} from "./list/models";
+
+// Interface personalizada para os itens de tarefa
+interface TaskItem extends AppListItem {
+  id: number;
+  title: string;
+  description: string;
+  icon: string;
+  color: string;
+  status: string;
+  category: string;
+  important?: boolean;
+}
 
 @Component({
-  selector: 'app-list-root',
+  selector: "app-list-root",
   standalone: true,
   imports: [CommonModule, ListComponent],
-  templateUrl: './app.component.html',
-  styleUrls: ['app.component.scss'],
+  templateUrl: "./app.component.html",
+  styleUrls: ["app.component.scss"],
 })
 export class AppComponent {
-  @ViewChild('customItemTemplate', { static: true })
+  @ViewChild("customItemTemplate", { static: true })
   customItemTemplate!: TemplateRef<any>;
+
+  // Expor enums para uso no template
+  protected readonly SelectionMode = SelectionMode;
+  protected readonly PageLoadMode = PageLoadMode;
 
   eventLog: string[] = [];
   loadProgress = {
@@ -26,71 +48,71 @@ export class AppComponent {
   userDataSource: AppListDataSource;
   productDataSource: AppListDataSource;
 
-  simpleItems = [
+  simpleItems: TaskItem[] = [
     {
       id: 1,
-      title: 'Complete Project Documentation',
-      description: 'Write comprehensive docs for the new feature',
-      icon: '📄',
-      color: '#1976d2',
-      status: 'Pending',
+      title: "Complete Project Documentation",
+      description: "Write comprehensive docs for the new feature",
+      icon: "📄",
+      color: "#1976d2",
+      status: "Pending",
       important: true,
-      category: 'Documentation',
+      category: "Documentation",
     },
     {
       id: 2,
-      title: 'Code Review',
-      description: 'Review pull requests from team members',
-      icon: '🔍',
-      color: '#388e3c',
-      status: 'Completed',
-      category: 'Development',
+      title: "Code Review",
+      description: "Review pull requests from team members",
+      icon: "🔍",
+      color: "#388e3c",
+      status: "Completed",
+      category: "Development",
     },
     {
       id: 3,
-      title: 'Deploy to Production',
-      description: 'Release version 2.0 to production servers',
-      icon: '🚀',
-      color: '#f57c00',
-      status: 'Failed',
+      title: "Deploy to Production",
+      description: "Release version 2.0 to production servers",
+      icon: "🚀",
+      color: "#f57c00",
+      status: "Failed",
       important: true,
-      category: 'DevOps',
+      category: "DevOps",
     },
     {
       id: 4,
-      title: 'Team Meeting',
-      description: 'Weekly sync with development team',
-      icon: '👥',
-      color: '#7b1fa2',
-      status: 'Pending',
-      category: 'Meetings',
+      title: "Team Meeting",
+      description: "Weekly sync with development team",
+      icon: "👥",
+      color: "#7b1fa2",
+      status: "Pending",
+      category: "Meetings",
     },
     {
       id: 5,
-      title: 'UI Design Review',
-      description: 'Review new UI components',
-      icon: '🎨',
-      color: '#e91e63',
-      status: 'Pending',
-      category: 'Design',
+      title: "UI Design Review",
+      description: "Review new UI components",
+      icon: "🎨",
+      color: "#e91e63",
+      status: "Pending",
+      category: "Design",
     },
     {
       id: 6,
-      title: 'Security Audit',
-      description: 'Perform security audit on the codebase',
-      icon: '🔒',
-      color: '#f44336',
-      status: 'Pending',
-      category: 'DevOps',
+      title: "Security Audit",
+      description: "Perform security audit on the codebase",
+      icon: "🔒",
+      color: "#f44336",
+      status: "Pending",
+      category: "DevOps",
     },
     {
       id: 7,
-      title: 'API Documentation',
-      description: 'Update API documentation for v2',
-      icon: '📋',
-      color: '#9c27b0',
-      status: 'Completed',
-      category: 'Documentation',
+      title: "API Documentation",
+      description: "Update API documentation for v2",
+      icon: "📋",
+      color: "#9c27b0",
+      status: "Completed",
+      category: "Documentation",
     },
   ];
 
@@ -122,10 +144,10 @@ export class AppComponent {
   }
 
   onUserSelectionChanged(event: any) {
-    const added = event.addedItems.map((item: User) => item.name).join(', ');
+    const added = event.addedItems.map((item: User) => item.name).join(", ");
     const removed = event.removedItems
       .map((item: User) => item.name)
-      .join(', ');
+      .join(", ");
 
     if (added) {
       this.log(`User selected: ${added}`);
@@ -138,7 +160,7 @@ export class AppComponent {
   onGroupExpansionChanged(event: any) {
     this.log(
       `Group "${event.group}" is now ${
-        event.expanded ? 'expanded' : 'collapsed'
+        event.expanded ? "expanded" : "collapsed"
       }`
     );
   }

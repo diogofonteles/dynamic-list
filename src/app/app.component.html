@@ -17,8 +17,8 @@
                     [height]="350"
                     [searchEnabled]="true"
                     [searchPlaceholder]="'Search users...'"
-                    [selectionMode]="'single'"
-                    [pageLoadMode]="'scrollBottom'"
+                    [selectionMode]="SelectionMode.SINGLE"
+                    [pageLoadMode]="PageLoadMode.SCROLL_BOTTOM"
                     [grouped]="true"
                     [pageSize]="15"
                     [preloadThreshold]="80"
@@ -38,7 +38,7 @@
                     [grouped]="false"
                     [searchEnabled]="true"
                     [pageSize]="15"
-                    [selectionMode]="'single'"
+                    [selectionMode]="SelectionMode.SINGLE"
                     [preloadThreshold]="80"
                     (itemClick)="onUserClick($event)">
             </list>
@@ -64,7 +64,7 @@
             <list
                     [items]="simpleItems"
                     [height]="350"
-                    [selectionMode]="'multiple'"
+                    [selectionMode]="SelectionMode.MULTIPLE"
                     [itemTemplate]="customItemTemplate"
                     [grouped]="true"
                     [groupBy]="'category'"

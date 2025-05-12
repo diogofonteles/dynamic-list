@@ -19,7 +19,8 @@
     <div class="list-content"
          #scrollContainer
          (scroll)="handleScroll($event)"
-         [class.native-scroll]="useNativeScrolling()">
+         [class.native-scroll]="useNativeScrolling()"
+         [class.loading-more]="isPageLoadingSignal()">
 
         @if (isLoadingSignal() && !isPageLoadingSignal() && _items.length === 0) {
             <div class="list-loading">
