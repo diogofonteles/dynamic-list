@@ -1,8 +1,6 @@
 import {
   Component,
   Input,
-  Output,
-  EventEmitter,
   ContentChildren,
   QueryList,
   OnDestroy,
@@ -17,8 +15,7 @@ import {
   computed,
   input,
   model,
-  InputSignal,
-  ModelSignal,
+  output,
 } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { Subscription } from "rxjs";
@@ -80,20 +77,20 @@ export class ListComponent
 
   _items: any[] = [];
 
-  @Output() itemClick = new EventEmitter<ItemClickEvent>();
-  @Output() scrollEvent = new EventEmitter<ScrollEvent>();
-  @Output() selectionChanged = new EventEmitter<{
+  itemClick = output<ItemClickEvent>();
+  scrollEvent = output<ScrollEvent>();
+  selectionChanged = output<{
     addedItems: any[];
     removedItems: any[];
   }>();
-  @Output() contentReady = new EventEmitter<void>();
-  @Output() pageLoadingEvent = new EventEmitter<void>();
-  @Output() searchValueChange = new EventEmitter<string>();
-  @Output() groupExpansionChanged = new EventEmitter<{
+  contentReady = output<void>();
+  pageLoadingEvent = output<void>();
+  searchValueChange = output<string>();
+  groupExpansionChanged = output<{
     group: string;
     expanded: boolean;
   }>();
-  @Output() loadProgress = new EventEmitter<{
+  loadProgress = output<{
     loaded: number;
     total: number;
     percent: number;
