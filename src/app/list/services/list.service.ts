@@ -1,15 +1,13 @@
-import { Injectable, signal } from "@angular/core";
-import { Observable, BehaviorSubject, of, timer } from "rxjs";
-import { tap } from "rxjs/operators";
+import {Injectable, signal} from "@angular/core";
+import {BehaviorSubject, Observable, of} from "rxjs";
 import {
-  AppListDataSource,
-  GroupedItems,
-  PaginatedResponse,
-  SelectionMode,
-  LoadProgressEvent,
-  SelectionChangeEvent,
-  PageLoadMode,
-  AppListItem,
+    AppListDataSource,
+    AppListItem,
+    GroupedItems,
+    LoadProgressEvent,
+    PaginatedResponse,
+    SelectionChangeEvent,
+    SelectionMode,
 } from "../models";
 
 @Injectable({

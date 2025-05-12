@@ -2,13 +2,7 @@ import {Component, TemplateRef, ViewChild} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {ListComponent} from './list/list.component';
 import {DataService} from './services/data.service';
-import {
-  AppListDataSource,
-  User,
-  SelectionMode,
-  PageLoadMode,
-  AppListItem,
-} from "./list/models";
+import {AppListDataSource, AppListItem, PageLoadMode, SelectionMode, User,} from "./list/models";
 
 // Interface personalizada para os itens de tarefa
 interface TaskItem extends AppListItem {

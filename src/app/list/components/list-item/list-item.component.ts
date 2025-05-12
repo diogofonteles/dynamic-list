@@ -1,5 +1,5 @@
-import { Component, TemplateRef, input, output, computed } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
+import {Component, computed, input, output, TemplateRef} from '@angular/core';
+import {NgTemplateOutlet} from '@angular/common';
 
 @Component({
   selector: 'list-item',

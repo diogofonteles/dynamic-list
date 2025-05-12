@@ -1,62 +1,48 @@
 import {
-  Component,
-  Input,
-  ContentChildren,
-  QueryList,
-  OnDestroy,
-  OnInit,
-  ChangeDetectorRef,
-  ElementRef,
-  ViewChild,
   AfterViewInit,
-  SimpleChanges,
-  signal,
+  ChangeDetectorRef,
+  Component,
   computed,
+  ContentChildren,
+  DestroyRef,
+  ElementRef,
+  inject,
+  Input,
   input,
   model,
+  OnDestroy,
+  OnInit,
   output,
-  inject,
-  DestroyRef,
+  QueryList,
+  signal,
+  ViewChild,
 } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import {
-  Subscription,
-  Subject,
-  debounceTime,
-  fromEvent,
-  Observable,
-  takeUntil,
-  of,
-  timer,
-  BehaviorSubject,
-  throttleTime,
-  tap,
-} from "rxjs";
-import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { ListItemComponent } from "./components/list-item/list-item.component";
+import {CommonModule} from "@angular/common";
+import {debounceTime, Subject, Subscription, throttleTime, timer,} from "rxjs";
+import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
+import {ListItemComponent} from "./components/list-item/list-item.component";
 import {
   AppListDataSource,
-  GroupedItems,
-  ItemClickEvent,
-  ScrollEvent,
   AppListItem,
-  PaginatedResponse,
-  SelectionMode,
-  PageLoadMode,
-  ScrollDirection,
   DEFAULT_HEIGHT,
-  DEFAULT_WIDTH,
-  DEFAULT_PRELOAD_THRESHOLD,
   DEFAULT_PAGE_SIZE,
+  DEFAULT_PRELOAD_THRESHOLD,
   DEFAULT_SEARCH_TIMEOUT,
+  DEFAULT_WIDTH,
+  GroupedItems,
+  GroupExpansionEvent,
+  ItemClickEvent,
+  LoadProgressEvent,
+  PageLoadMode,
+  PRELOAD_CHECK_DELAY,
   SCROLL_DEBOUNCE_TIME,
   SCROLL_END_THRESHOLD,
-  PRELOAD_CHECK_DELAY,
-  LoadProgressEvent,
+  ScrollDirection,
+  ScrollEvent,
   SelectionChangeEvent,
-  GroupExpansionEvent,
+  SelectionMode,
 } from "./models";
-import { ListService } from "./services/list.service";
+import {ListService} from "./services/list.service";
 
 @Component({
   selector: "list",
