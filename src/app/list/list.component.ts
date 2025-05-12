@@ -18,308 +18,18 @@ import {
   input,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Observable, Subscription } from 'rxjs';
-import { AppListItemComponent } from './app-list-item.component';
-import { PaginatedResponse } from './data.service';
-
-export interface GroupedItems {
-  name: string;
-  expanded: boolean;
-  items: any[];
-}
-
-export interface AppListDataSource {
-  load: (
-    page: number,
-    pageSize: number,
-    search?: string
-  ) => Observable<PaginatedResponse<any>>;
-  totalCount?: number;
-  pageSize?: number;
-}
-
-export interface AppListItem {
-  id?: string;
-  text?: string;
-  name?: string;
-  visible?: boolean;
-  disabled?: boolean;
-  badge?: string;
-  icon?: string;
-  showChevron?: boolean;
-  template?: any;
-  group?: string;
-  [key: string]: any;
-}
-
-export interface ItemClickEvent {
-  itemData: any;
-  itemElement: HTMLElement;
-  itemIndex: number;
-  groupName?: string;
-}
-
-export interface ScrollEvent {
-  scrollTop: number;
-  scrollHeight: number;
-  clientHeight: number;
-  reachEnd: boolean;
-  percent: number;
-}
+import { Subscription } from 'rxjs';
+import { AppListItemComponent } from '../app-list-item.component';
+import {AppListDataSource, GroupedItems, ItemClickEvent, ScrollEvent} from '../models/list.model';
 
 @Component({
-  selector: 'app-list',
+  selector: 'list',
   standalone: true,
   imports: [CommonModule, AppListItemComponent],
-  template: `
-    <div class="app-list-container" #container
-         [class.scrollable]="scrollingEnabled"
-         [style.height]="heightStyle()"
-         [style.width]="widthStyle()">
-      
-      <!-- Search Box -->
-      @if (searchEnabled) {
-        <div class="app-list-search">
-          <input 
-            type="text" 
-            class="app-list-search-input"
-            [placeholder]="searchPlaceholder || 'Search...'"
-            [value]="searchValueSignal()"
-            (input)="handleSearchInput($event)"
-            (change)="handleSearchChange($event)">
-        </div>
-      }
-
-      <!-- List Content -->
-      <div class="app-list-content" 
-           #scrollContainer
-           (scroll)="handleScroll($event)"
-           [class.native-scroll]="useNativeScrolling">
-        
-        <!-- Loading Indicator -->
-        @if (isLoadingSignal() && !isPageLoadingSignal() && _items.length === 0) {
-          <div class="app-list-loading">
-            <div class="loading-indicator">
-              <div class="loading-spinner"></div>
-              <div class="loading-text">Loading...</div>
-            </div>
-          </div>
-        }
-
-        <!-- No Data -->
-        @if (!isLoadingSignal() && !isPageLoadingSignal() && _items.length === 0) {
-          <div class="app-list-no-data">
-            {{ noDataText || 'No data to display' }}
-          </div>
-        }
-
-        <!-- Grouped Items -->
-        @if (!isLoadingSignal() && grouped && groupedItems.length > 0) {
-          <div class="app-list-grouped">
-            @for (group of groupedItems; track group.name) {
-              <!-- Group Header -->
-              <div class="group-header" (click)="toggleGroupExpansion(group)">
-                <div class="group-title">{{ group.name }}</div>
-                <div class="group-toggle">
-                  @if (group.expanded) {
-                    <span>▼</span>
-                  } @else {
-                    <span>▶</span>
-                  }
-                </div>
-              </div>
-              
-              <!-- Group Items -->
-              @if (group.expanded) {
-                <div class="group-items">
-                  @for (item of group.items; track trackByFn($index, item)) {
-                    <app-list-item
-                      [item]="item"
-                      [index]="$index"
-                      [selected]="isItemSelected(item)"
-                      [disabled]="item.disabled || disabled"
-                      [template]="item.template || itemTemplate"
-                      (clickEvent)="handleItemClick($event, item, $index, group.name)">
-                    </app-list-item>
-                  }
-                </div>
-              }
-            }
-          </div>
-        }
-
-        <!-- Flat Items (no grouping) -->
-        @if (!isLoadingSignal() && !grouped && _items.length > 0) {
-          <div class="app-list-items">
-            @for (item of _items; track trackByFn($index, item)) {
-              <app-list-item
-                [item]="item"
-                [index]="$index"
-                [selected]="isItemSelected(item)"
-                [disabled]="item.disabled || disabled"
-                [template]="item.template || itemTemplate"
-                (clickEvent)="handleItemClick($event, item, $index)">
-              </app-list-item>
-            }
-          </div>
-        }
-
-        <!-- Page Loading -->
-        @if (isPageLoadingSignal()) {
-          <div class="app-list-page-loading">
-            <div class="loading-indicator">
-              <div class="loading-spinner"></div>
-              <div class="loading-text">{{ pageLoadingText || 'Loading more...' }}</div>
-            </div>
-          </div>
-        }
-      </div>
-    </div>
-  `,
-  styles: [
-    `
-    .app-list-container {
-      width: 100%;
-      height: 350px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      border: 1px solid #ddd;
-      background: white;
-      position: relative;
-    }
-
-    .app-list-search {
-      padding: 8px;
-      border-bottom: 1px solid #eee;
-      z-index: 2;
-      flex-shrink: 0;  /* Impede que a caixa de busca encolha */
-    }
-
-    .app-list-search-input {
-      width: 100%;
-      padding: 8px 12px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 14px;
-    }
-
-    .app-list-content {
-      flex: 1 1 auto;
-      overflow-y: scroll;
-      position: relative;
-      scroll-behavior: smooth;
-      min-height: 0;  /* Importante para o scrolling em flexbox */
-    }
-
-    .app-list-content.native-scroll {
-      overflow-y: scroll;
-    }
-
-    .app-list-loading,
-    .app-list-no-data,
-    .app-list-page-loading {
-      padding: 20px;
-      text-align: center;
-      color: #666;
-    }
-
-    .loading-indicator {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-
-    .loading-spinner {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 2px solid rgba(0, 0, 0, 0.1);
-      border-top-color: #1976d2;
-      border-radius: 50%;
-      animation: spinner 0.8s linear infinite;
-    }
-
-    .loading-text {
-      display: inline-block;
-      font-size: 14px;
-    }
-
-    @keyframes spinner {
-      to {transform: rotate(360deg);}
-    }
-
-    .app-list-items, .app-list-grouped {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .group-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 16px;
-      background-color: #f5f5f5;
-      border-bottom: 1px solid #eee;
-      font-weight: 500;
-      cursor: pointer;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
-
-    .group-header:hover {
-      background-color: #eeeeee;
-    }
-
-    .group-title {
-      font-size: 14px;
-      color: #555;
-    }
-
-    .group-toggle {
-      font-size: 12px;
-      color: #777;
-    }
-
-    .group-items {
-      background-color: white;
-    }
-
-    .app-list-page-loading {
-      padding: 15px;
-      text-align: center;
-      border-top: 1px solid #f0f0f0;
-      background-color: #fafafa;
-    }
-
-    :host {
-      display: block;
-    }
-
-    /* Estilização da barra de rolagem */
-    .app-list-content::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    .app-list-content::-webkit-scrollbar-track {
-      background: #f1f1f1;
-      border-radius: 4px;
-    }
-
-    .app-list-content::-webkit-scrollbar-thumb {
-      background: #c1c1c1;
-      border-radius: 4px;
-    }
-
-    .app-list-content::-webkit-scrollbar-thumb:hover {
-      background: #a8a8a8;
-    }
-  `,
-  ],
+  templateUrl: 'list.component.html',
+  styleUrls: ['list.component.scss'],
 })
-export class AppListComponent
+export class ListComponent
   implements OnInit, OnDestroy, AfterViewInit, OnChanges
 {
   @ViewChild('scrollContainer') scrollContainer!: ElementRef<HTMLDivElement>;
@@ -331,8 +41,8 @@ export class AppListComponent
   }
   set dataSource(value: AppListDataSource | any[] | null) {
     this._dataSource = value;
-    this.currentPage = 1; // Reset page when data source changes
-    this._items = []; // Limpar items ao trocar o dataSource
+    this.currentPage = 1;
+    this._items = [];
     this.loadData();
   }
   private _dataSource: AppListDataSource | any[] | null = null;
@@ -358,7 +68,7 @@ export class AppListComponent
   @Input() useNativeScrolling: boolean = true;
   @Input() pageLoadMode: 'nextButton' | 'scrollBottom' | 'none' =
     'scrollBottom';
-  @Input() preloadThreshold: number = 80; // 80% da visualização
+  @Input() preloadThreshold: number = 80;
 
   @Input() searchEnabled: boolean = false;
   @Input() searchPlaceholder: string | undefined;
@@ -377,9 +87,8 @@ export class AppListComponent
   @Input() groupBy: string = 'group';
   @Input() collapsedGroups: string[] = [];
 
-  @Input() pageSize: number = 15; // 15 itens por página
+  @Input() pageSize: number = 15;
 
-  // Event Emitters
   @Output() itemClick = new EventEmitter<ItemClickEvent>();
   @Output() scrollEvent = new EventEmitter<ScrollEvent>();
   @Output() selectionChanged = new EventEmitter<{
@@ -403,7 +112,6 @@ export class AppListComponent
   @ContentChildren(AppListItemComponent)
   itemsChildren!: QueryList<AppListItemComponent>;
 
-  // Estados internos convertidos para signals
   isLoadingSignal = signal<boolean>(false);
   isPageLoadingSignal = signal<boolean>(false);
   currentPage: number = 1;
@@ -414,7 +122,6 @@ export class AppListComponent
   groupedItems: GroupedItems[] = [];
   isPreloading: boolean = false;
 
-  // Computed signals para estilos
   heightStyle = computed(() => {
     if (this.height() !== undefined) {
       return typeof this.height() === 'number'
@@ -447,12 +154,10 @@ export class AppListComponent
   }
 
   ngAfterViewInit() {
-    // Garantir que a barra de rolagem seja visível
     if (this.scrollContainer) {
       this.scrollContainer.nativeElement.style.overflowY = 'scroll';
     }
 
-    // Iniciar com a verificação de preload após o componente ser inicializado
     setTimeout(() => {
       this.checkPreloadCondition();
     }, 0);
@@ -460,7 +165,6 @@ export class AppListComponent
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['preloadThreshold'] || changes['pageSize']) {
-      // Se as configurações de preload ou pageSize mudarem, verificar novamente
       this.checkPreloadCondition();
     }
   }
@@ -503,7 +207,7 @@ export class AppListComponent
       }
     } else {
       this.isPageLoadingSignal.set(true);
-      this.isPreloading = false; // Reset preloading flag
+      this.isPreloading = false;
       this.pageLoadingEvent.emit();
     }
 
@@ -512,14 +216,12 @@ export class AppListComponent
     }
 
     if (Array.isArray(this.dataSource)) {
-      // Simple array data source
       if (!isPageLoad) {
         this._items = [...this.dataSource];
         this.totalItems = this.dataSource.length;
         this.loadedItems = this.dataSource.length;
         this.hasMoreItems = false;
       } else {
-        // Se for um array simples, não tem paginação
         this.isPageLoadingSignal.set(false);
       }
 
@@ -531,7 +233,6 @@ export class AppListComponent
       this.contentReady.emit();
       this.emitLoadProgress();
     } else if (typeof this.dataSource === 'object' && this.dataSource.load) {
-      // Observable data source with pagination
       const currentPageSize = this.pageSize;
 
       this.loadSubscription = this.dataSource
@@ -559,7 +260,6 @@ export class AppListComponent
             this.emitLoadProgress();
             this.cdr.detectChanges();
 
-            // Verificar se precisa précarregar mais dados mesmo após a carga inicial
             if (!isPageLoad && this.hasMoreItems) {
               setTimeout(() => {
                 this.checkPreloadCondition();
@@ -595,7 +295,6 @@ export class AppListComponent
       return;
     }
 
-    // Agrupar itens
     const groups: { [key: string]: any[] } = {};
 
     for (const item of this._items) {
@@ -606,16 +305,14 @@ export class AppListComponent
       groups[groupValue].push(item);
     }
 
-    // Converter para o formato de grupos
     this.groupedItems = Object.keys(groups).map((groupName) => {
       return {
         name: groupName,
-        expanded: !this.collapsedGroups.includes(groupName), // Expandido por padrão
+        expanded: !this.collapsedGroups.includes(groupName),
         items: groups[groupName],
       };
     });
 
-    // Ordenar grupos por nome
     this.groupedItems.sort((a, b) => a.name.localeCompare(b.name));
   }
 
@@ -634,9 +331,8 @@ export class AppListComponent
   }
 
   handleSearchChange(event: any) {
-    // Reset para a primeira página e recarregar dados
     this.currentPage = 1;
-    this._items = []; // Limpar itens existentes
+    this._items = [];
     this.loadData();
   }
 
@@ -655,7 +351,6 @@ export class AppListComponent
       groupName: groupName,
     };
 
-    // Handle selection
     if (this.selectionMode !== 'none') {
       this.toggleSelection(item);
     }
@@ -668,21 +363,17 @@ export class AppListComponent
       clearTimeout(this.scrollDebounceTimeout);
     }
 
-    // Debounce scroll event to improve performance
     this.scrollDebounceTimeout = setTimeout(() => {
       const element = event.target;
       const scrollTop = element.scrollTop;
       const scrollHeight = element.scrollHeight;
       const clientHeight = element.clientHeight;
 
-      // Calcular percentual de scroll
       const percent = (scrollTop / (scrollHeight - clientHeight)) * 100;
 
-      // Determinar direção do scroll
       this.scrollDirection = scrollTop > this.lastScrollTop ? 'down' : 'up';
       this.lastScrollTop = scrollTop;
 
-      // Considerar chegada ao fim com threshold
       const reachEnd = scrollTop + clientHeight >= scrollHeight - 20;
 
       const scrollEvent: ScrollEvent = {
@@ -695,9 +386,8 @@ export class AppListComponent
 
       this.scrollEvent.emit(scrollEvent);
 
-      // Verificar se deve pré-carregar mais dados
       this.checkPreloadCondition();
-    }, 50); // 50ms debounce
+    }, 50);
   }
 
   private checkPreloadCondition() {
@@ -716,15 +406,13 @@ export class AppListComponent
     const scrollHeight = element.scrollHeight;
     const clientHeight = element.clientHeight;
 
-    // Calcular percentual visualizado
     const scrolledPercent = ((scrollTop + clientHeight) / scrollHeight) * 100;
 
-    // Se o usuário já visualizou X% do conteúdo e está scrollando para baixo
     if (
       scrolledPercent >= this.preloadThreshold &&
       this.scrollDirection === 'down'
     ) {
-      this.isPreloading = true; // Sinalizar que está pré-carregando
+      this.isPreloading = true;
       this.loadMore();
     }
   }
@@ -732,13 +420,11 @@ export class AppListComponent
   toggleGroupExpansion(group: GroupedItems) {
     group.expanded = !group.expanded;
 
-    // Emit event
     this.groupExpansionChanged.emit({
       group: group.name,
       expanded: group.expanded,
     });
 
-    // Update collapsedGroups array
     if (group.expanded) {
       this.collapsedGroups = this.collapsedGroups.filter(
         (g) => g !== group.name
@@ -747,7 +433,6 @@ export class AppListComponent
       this.collapsedGroups.push(group.name);
     }
 
-    // Forçar detecção de mudanças para atualizar view
     this.cdr.detectChanges();
   }
 
@@ -784,7 +469,6 @@ export class AppListComponent
     }
   }
 
-  // Função para obter a chave do item
   private getItemKeyValue(item: any): any {
     if (typeof this.keyExpr === 'string') {
       return item[this.keyExpr];
@@ -799,7 +483,6 @@ export class AppListComponent
     return this.selectedItemKeys.includes(key);
   }
 
-  // Função de tracking para @for
   trackByFn(index: number, item: any): any {
     if (!item) return index;
     if (typeof this.keyExpr === 'string') {

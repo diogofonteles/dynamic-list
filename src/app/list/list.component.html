@@ -1,0 +1,103 @@
+<div class="list-container" #container
+     [class.scrollable]="scrollingEnabled"
+     [style.height]="heightStyle()"
+     [style.width]="widthStyle()">
+
+    <!-- Search Box -->
+    @if (searchEnabled) {
+        <div class="list-search">
+            <input
+                    type="text"
+                    class="list-search-input"
+                    [placeholder]="searchPlaceholder || 'Search...'"
+                    [value]="searchValueSignal()"
+                    (input)="handleSearchInput($event)"
+                    (change)="handleSearchChange($event)">
+        </div>
+    }
+
+    <!-- List Content -->
+    <div class="list-content"
+         #scrollContainer
+         (scroll)="handleScroll($event)"
+         [class.native-scroll]="useNativeScrolling">
+
+        <!-- Loading Indicator -->
+        @if (isLoadingSignal() && !isPageLoadingSignal() && _items.length === 0) {
+            <div class="list-loading">
+                <div class="loading-indicator">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">Loading...</div>
+                </div>
+            </div>
+        }
+
+        <!-- No Data -->
+        @if (!isLoadingSignal() && !isPageLoadingSignal() && _items.length === 0) {
+            <div class="list-no-data">
+                {{ noDataText || 'No data to display' }}
+            </div>
+        }
+
+        <!-- Grouped Items -->
+        @if (!isLoadingSignal() && grouped && groupedItems.length > 0) {
+            <div class="list-grouped">
+                @for (group of groupedItems; track group.name) {
+                    <!-- Group Header -->
+                    <div class="group-header" (click)="toggleGroupExpansion(group)">
+                        <div class="group-title">{{ group.name }}</div>
+                        <div class="group-toggle">
+                            @if (group.expanded) {
+                                <span>▼</span>
+                            } @else {
+                                <span>▶</span>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Group Items -->
+                    @if (group.expanded) {
+                        <div class="group-items">
+                            @for (item of group.items; track trackByFn($index, item)) {
+                                <app-list-item
+                                        [item]="item"
+                                        [index]="$index"
+                                        [selected]="isItemSelected(item)"
+                                        [disabled]="item.disabled || disabled"
+                                        [template]="item.template || itemTemplate"
+                                        (clickEvent)="handleItemClick($event, item, $index, group.name)">
+                                </app-list-item>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        }
+
+        <!-- Flat Items (no grouping) -->
+        @if (!isLoadingSignal() && !grouped && _items.length > 0) {
+            <div class="list-items">
+                @for (item of _items; track trackByFn($index, item)) {
+                    <app-list-item
+                            [item]="item"
+                            [index]="$index"
+                            [selected]="isItemSelected(item)"
+                            [disabled]="item.disabled || disabled"
+                            [template]="item.template || itemTemplate"
+                            (clickEvent)="handleItemClick($event, item, $index)">
+                    </app-list-item>
+                }
+            </div>
+        }
+
+        <!-- Page Loading -->
+        @if (isPageLoadingSignal()) {
+            <div class="list-page-loading">
+                <div class="loading-indicator">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">{{ pageLoadingText || 'Loading more...' }}</div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

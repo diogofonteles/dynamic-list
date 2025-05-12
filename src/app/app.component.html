@@ -1,0 +1,109 @@
+<div class="app-container">
+    <h1>Angular List Component Demo</h1>
+
+    <div class="examples">
+        <!-- Example 1: Basic List with DataSource (Infinite Scroll) -->
+        <div class="example">
+            <h2>Basic List with DataSource (Infinite Scroll)</h2>
+            <div class="status-info">
+                <div class="progress-container">
+                    <div class="progress-bar" [style.width.%]="loadProgress.percent"></div>
+                </div>
+                <div class="progress-text">
+                    Loaded {{loadProgress.loaded}} of {{loadProgress.total}} items ({{loadProgress.percent}}%)
+                </div>
+            </div>
+            <list
+                    [dataSource]="userDataSource"
+                    [height]="350"
+                    [searchEnabled]="true"
+                    searchPlaceholder="Search users..."
+                    [selectionMode]="'single'"
+                    [pageLoadMode]="'scrollBottom'"
+                    [grouped]="true"
+                    [pageSize]="15"
+                    [preloadThreshold]="80"
+                    groupBy="group"
+                    (itemClick)="onUserClick($event)"
+                    (selectionChanged)="onUserSelectionChanged($event)"
+                    (groupExpansionChanged)="onGroupExpansionChanged($event)"
+                    (loadProgress)="onLoadProgress($event)">
+            </list>
+        </div>
+
+        <!-- Example 2: Non-Grouped List -->
+        <div class="example">
+            <h2>Non-Grouped Flat List (Infinite Scroll)</h2>
+            <list
+                    [dataSource]="userDataSource"
+                    [height]="350"
+                    [grouped]="false"
+                    [searchEnabled]="true"
+                    [pageSize]="15"
+                    [selectionMode]="'single'"
+                    [preloadThreshold]="80"
+                    (itemClick)="onUserClick($event)">
+            </list>
+        </div>
+
+        <!-- Example 3: Products List with Badges -->
+        <div class="example">
+            <h2>Products List by Category</h2>
+            <list
+                    [dataSource]="productDataSource"
+                    [height]="350"
+                    [searchEnabled]="true"
+                    searchPlaceholder="Search products..."
+                    [grouped]="true"
+                    [pageSize]="15"
+                    [preloadThreshold]="80"
+                    groupBy="group"
+                    (itemClick)="onProductClick($event)">
+            </list>
+        </div>
+
+        <!-- Example 4: Simple Array List -->
+        <div class="example">
+            <h2>Simple Array List with Custom Template</h2>
+            <list
+                    [items]="simpleItems"
+                    [height]="350"
+                    [selectionMode]="'multiple'"
+                    [itemTemplate]="customItemTemplate"
+                    [grouped]="true"
+                    groupBy="category"
+                    (itemClick)="onItemClick($event)">
+            </list>
+        </div>
+    </div>
+
+    <!-- Event Log -->
+    <div class="event-log">
+        <h3>Event Log</h3>
+        <div class="log-entries">
+            <div *ngFor="let log of eventLog; let i = index" class="log-entry">
+                {{ log }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Item Template -->
+    <ng-template #customItemTemplate let-item>
+        <div class="custom-item">
+            <div class="custom-icon">
+                <i class="icon" [style.color]="item.color">{{ item.icon }}</i>
+            </div>
+            <div class="custom-content">
+                <div class="custom-title" [style.fontWeight]="item.important ? 'bold' : 'normal'">
+                    {{ item.title }}
+                </div>
+                <div class="custom-description">{{ item.description }}</div>
+            </div>
+            <div class="custom-status" *ngIf="item.status">
+            <span [class]="'status-badge ' + item.status.toLowerCase()">
+              {{ item.status }}
+            </span>
+            </div>
+        </div>
+    </ng-template>
+</div>
